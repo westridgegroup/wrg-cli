@@ -1,8 +1,9 @@
 # wrgcli: 
-### Westridge Groups Client Enterprise grade built for the individual 
+### Enterprise grade built for the individual 
 
 ## Intro 
-The terraform-azure-boostrap project provides an enterprise-ready backend using Azure resources.  Using the terraform-azure-bootstrap, moves your Terraform state files to Azure Storage and uses an App Registration Client Id and Client Secret for authorization to Azure.  This allows you to decouple the permissions from your account to that of the App Registration.  It also allows you to share state files across your organization with other developers or CICD pipelines.  Lastly, it allows you to release the same terraform code to different environments without overwriting state files and without modifying the terraform code or having some sort of pre-execution replacement script run.
+The wrgcli is a set of bash scripts meant to aid developers and operation personel in managment of the enviorment.  This client wraps a number of well known tools with the guidance from Westridge Group to make tasks easier and faster to complete.  
+
 
 ## Requirements
 
