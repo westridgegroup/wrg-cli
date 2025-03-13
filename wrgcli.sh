@@ -14,7 +14,7 @@
 #        - ARM_TENANT_ID																									#
 #        - ARM_ACCESS_KEY																									#
 #																															#
-#VERSION 3.0.0																												#
+#VERSION 3.0.1																												#
 #																															#
 #EXAMPLE																													#
 #    source ./wrgcli.sh																			#
@@ -35,7 +35,7 @@
 #																															#
 #############################################################################################################################
 echo "sourcing wrgcli.sh"
-echo "tofu_help for help"
+echo "wrg_help for help"
 
 YELLOW='\033[0;33m'
 RED='\033[0;31m'
@@ -56,7 +56,16 @@ done
 alias faa=' (print -rlo ${(k)functions} ${(k)aliases} )'
 alias tofu_help=' (faa | grep ^tofu)'
 
-function terra_read_env_file() {
+function wrg_help(){
+	echo "Welcome to the WRG client!"
+	echo ""
+	echo "Sub-topic help commands:"
+	echo "tofu_help - help with the Open Tofu client commands"
+	echo ""
+	tofu_help
+}
+
+function tofu_read_env_file() {
 	echo "ENV FILE: $ENV_FILE"
 	a=$(grep state_container_name $ENV_FILE)
 	b=$(echo $a | tr -d "=")
@@ -76,7 +85,7 @@ function terra_read_env_file() {
 	echo "STATE_KEY: $STATE_KEY"
 }
 
-function terra_set_core_variables() {
+function tofu_set_core_variables() {
 
 if [ -z "$USER_KEY_VAULT_PATTERN" ]
 	then
@@ -100,7 +109,7 @@ fi
 }
 
 
-function terra_get_keyvault_values() {
+function tofu_get_keyvault_values() {
 
 #####################
 #Check Azure login	#
@@ -179,15 +188,26 @@ if [ -z "$ARM_ACCESS_KEY" ]
 		echo "${YELLOW}SUCCESS!${NC}"
 fi
 
+echo "Loading DATABRICKS_ACCOUNT_ID..."
+DATABRICKS_ACCOUNT_ID=$(az keyvault secret show --vault-name $KEY_VAULT_NAME --name DATABRICKS-ACCOUNT-ID --query "value" --output tsv)
+if [ -z "$DATABRICKS_ACCOUNT_ID" ]
+	then 
+		printf '%s\n' "FAILURE! Azure Key Vault missing secret DATABRICKS_ACCOUNT_ID" >&2
+	else
+		echo "${YELLOW}SUCCESS!${NC}"
+fi
+
 }
 
-function terra_get_backend_values() {
+
+
+function tofu_get_backend_values() {
 
 	BACKEND_STORAGE_ACCOUNT=$(az storage account list --resource-group $TERRAFORM_RESOURCE_GROUP --query "[?contains(@.name, 'terraform')==\`true\`].name" --output tsv)
 }
 
 
-function terra_output_info() {
+function tofu_output_info() {
 	echo "************************************************************************"
 	echo "                              SPN VALUES"
 	echo "************************************************************************"
@@ -196,6 +216,7 @@ function terra_output_info() {
 	echo "ARM_CLIENT_SECRET:   HIDDEN!"
 	echo "ARM_TENANT_ID:       $ARM_TENANT_ID"
 	echo "ARM_ACCESS_KEY:      $ARM_ACCESS_KEY"
+	echo "DATABRICKS_ACCOUNT_ID:" $DATABRICKS_ACCOUNT_ID
 	echo "************************************************************************"
 	echo ""
 	export ARM_CLIENT_ID
@@ -203,14 +224,19 @@ function terra_output_info() {
 	export ARM_TENANT_ID
 	export ARM_SUBSCRIPTION_ID
 	export ARM_ACCESS_KEY
+	export TF_VAR_arm_client_id=$ARM_CLIENT_ID
+	export TF_VAR_arm_client_secret=$ARM_CLIENT_SECRET
+	export TF_VAR_arm_tenant_id=$ARM_TENANT_ID
+	export TF_VAR_databricks_account_id=$DATABRICKS_ACCOUNT_ID
+
 }
 
 function tofu_init() {
 	
-	TERRAFORM_INIT="tofu init --backend-config='storage_account_name=$BACKEND_STORAGE_ACCOUNT' --backend-config='key=$STATE_KEY' --backend-config='container_name=$STATE_CONTAINER_NAME' --reconfigure"
-	echo "Running: $TERRAFORM_INIT"
+	TOFU_INIT="tofu init --backend-config='storage_account_name=$BACKEND_STORAGE_ACCOUNT' --backend-config='key=$STATE_KEY' --backend-config='container_name=$STATE_CONTAINER_NAME' --reconfigure"
+	echo "Running: $TOFU_INIT"
 
-	bash -c $TERRAFORM_INIT
+	bash -c $TOFU_INIT
 
 }
 #####################
@@ -219,11 +245,11 @@ function tofu_init() {
 function tofu_setup() {
 	ENV_FILE=$1
 	echo "ENV_FILE is $ENV_FILE"
-	terra_set_core_variables
-	terra_get_keyvault_values
-	terra_get_backend_values
+	tofu_set_core_variables
+	tofu_get_keyvault_values
+	tofu_get_backend_values
 	terra_read_env_file
-	terra_output_info
+	tofu_output_info
 	tofu_init
 
 	echo "FINISHED!"
