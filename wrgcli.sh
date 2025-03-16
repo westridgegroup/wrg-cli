@@ -248,7 +248,7 @@ function tofu_setup() {
 	tofu_set_core_variables
 	tofu_get_keyvault_values
 	tofu_get_backend_values
-	terra_read_env_file
+	tofu_read_env_file
 	tofu_output_info
 	tofu_init
 
